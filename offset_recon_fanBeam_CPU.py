@@ -9,17 +9,18 @@ AXIm (Advanced X-ray Imaging Group),
 Department of Medical Physics and Biomedical Engineering, 
 University College London, UK
 
-Code to suport the publication: "Extended Field-of-View X-Ray Attenuation, Phase, and Darkfield Microtomography 
-using an Offset Cone-Beam Geometry", Harry Allan et al. 
+Code includes functions for weighting, filtering, and 
+reconstruction, which may be applied to data acquired in a range of conventional and phase-sensitive CT systems.
 
 Code is adapted to demonstrate the offset geometry reconstruction using a CPU compatible fan-beam geometry, based on the
-same principles as the cone-beam geometry. Data is kept small to remain compatible on a range of systems. 
-Should be easily adaptable for real user data.
+same principles as the cone-beam geometry. Data is kept small for quick computation on a range of systems. Should be easily 
+adaptable for real user data.
 
 """
 #%%
 
 import numpy as np
+import math
 from matplotlib import pyplot as plt
 import astra
 from skimage.data import shepp_logan_phantom
@@ -27,16 +28,28 @@ import matplotlib as mpl
 mpl.rcParams['figure.dpi']=400
 
 
-def apply_weighting(sino,offset,mag,detector_pixel_size,distance_source_origin):
+def apply_weighting_offsetDet(sino,offset,mag,detector_pixel_size,distance_source_origin):
     """
+    A weighting function using offset detector weights, for which the weighting function is spatially symmetric about the 
+    centre of rotation. This has been tested with offset rotation axis data, for which this weighting function is no longer 
+    correct (though it may stil provide reasonable results for small cone angles). Function is provided for potential 
+    usefullness but not used in this script or yet tested with offset detector data.
     
+    Input:
+    sino: sinogram, assumed to be 2D array of shape (num_projections, num_columns)
+    offset: offset of the detector from the centre of rotation
+    mag: magnification factor
+    detector_pixel_size: size of detector pixel
+    distance_source_origin: distance from source to centre of rotation
+
+    Output:
+    sino: weighted sinogram of same shape as input
+
     """
 
     num_columns = sino.shape[1]    
 
-    weight_lim = int(num_columns -(offset*2*mag)) # int(num_columns/2 - offset) #
-
-    #weight_lim = int(num_columns/2 - offset)
+    weight_lim = int(num_columns -(offset*2*mag)) 
 
     phi = weight_lim*detector_pixel_size
     t = np.linspace(-phi,phi,weight_lim)
@@ -52,6 +65,55 @@ def apply_weighting(sino,offset,mag,detector_pixel_size,distance_source_origin):
 
     return sino
 
+def apply_weighting_offsetCOR(sino,offset,detector_pixel_size,distance_source_origin,distance_origin_detector):
+    """
+    A weighting function using offset centre-of-rotation weights, for which the weighting function is angularly symmetric 
+    about the centre of rotation. This function is used in this script for the offset fan-beam geometry. 
+
+    Input:
+    sino: sinogram, assumed to be 2D array of shape (num_projections, num_columns)
+    offset: offset of the centre of rotation from the centre of the detector
+    detector_pixel_size: size of detector pixel
+    distance_source_origin: distance from source to centre of rotation
+    distance_origin_detector: distance from centre of rotation to detector
+
+    Output:
+    sino: weighted sinogram of same shape as input
+    y: weighting function applied to sinogram
+
+    """
+
+    num_columns = sino.shape[1]    
+
+    t = np.linspace(-num_columns/2,num_columns/2,num_columns)
+
+    # normalised source to detector distance
+    SDD = (distance_source_origin + distance_origin_detector)/detector_pixel_size
+
+    # angle between optical axis and COR
+    tau = np.arctan(offset/(distance_source_origin/detector_pixel_size))
+
+    alpha_u = np.arctan(t/SDD) + tau
+    alpha = np.arctan((num_columns/2)/SDD)
+    
+    weight_end = int(np.abs(num_columns/2 + SDD*np.tan(alpha-2*np.abs(tau))))
+
+    top = alpha_u
+    bottom = alpha-np.abs(tau) 
+
+    y = 0.5*( math.copysign(1,tau) * np.sin(np.pi/2 * top/bottom) + 1 )
+
+    if tau > 0:
+        y[weight_end:] = 1
+    elif tau < 0:
+        y[:-weight_end] = 1
+    
+    y = y*2
+
+    sino = sino * y
+
+    return sino, y
+
 def apply_filter(sino,filter_name='ramp'):
     """
     Applying variation of ramp filter to sinogram.
@@ -61,7 +123,7 @@ def apply_filter(sino,filter_name='ramp'):
     filter_name: name of filter, available filters: ramp, shepp-logan, cosine, hamming, hann
 
     Output:
-    sino: filtered sinogram
+    sino: filtered sinogram of same shape as input
 
     """
 
@@ -131,7 +193,7 @@ def apply_filter(sino,filter_name='ramp'):
 # generating a phantom of default size 400 x 400
 phantom = shepp_logan_phantom()
 
-# setting some arbitrary geometry parameters
+# setting and calculating some arbitrary geometry parameters
 distance_source_origin = 800 # [mm]
 distance_origin_detector = 200 # [mm]
 detector_pixel_size =  20**(-3) # [mm]
@@ -144,12 +206,12 @@ mag = (distance_source_origin+distance_origin_detector)/distance_source_origin
 
 eff_pix_size = detector_pixel_size/mag
 
+# array containing angles, flipped as convention to fit the acquisition software in our system
+angles = np.flip((np.linspace(0, angular_range*2*np.pi/360, num=no_projections, endpoint=False)))
+
 # offset is defined as the distance between the perpendicular line from the source to the centre of the detector,
 # and the centre of rotation
 offset = 80 
-
-# array containing angles, flipped as convention to fit the acquisition software in our system
-angles = np.flip((np.linspace(0, angular_range*2*np.pi/360, num=no_projections, endpoint=False)))
 
 # setting deltaU as the offset, not this step may be used to adjust the vectors depending on how the offset is defined
 deltaU = offset
@@ -210,7 +272,7 @@ dat = apply_filter(dat,filter_name='ramp')
 volume_noWeight = volume_noWeight * np.pi / (2 * no_projections)
 
 # apply offset geometry weighting POST ramp filter
-dat = apply_weighting(dat,offset,mag,detector_pixel_size,distance_source_origin)
+dat,_ = apply_weighting_offsetCOR(dat,offset,detector_pixel_size,distance_source_origin,distance_origin_detector)
 
 [idd, volume_post] = astra.create_backprojection(dat, proj_id)
 
@@ -231,4 +293,3 @@ plt.subplot(1,3,3)
 plt.imshow(volume_post,cmap='gray',vmin=0,vmax=0.8)
 plt.axis('off')
 plt.title('Recon: weighted')
-
