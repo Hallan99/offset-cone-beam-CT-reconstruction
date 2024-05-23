@@ -4,3 +4,6 @@ Code to suport the publication: "Extended Field-of-View X-Ray Attenuation, Phase
 Scripts are provided to simulate central-slice sinograms of an offset cone-beam geometry, and then reconstruct using the demonstrated redundancy weighting scheme. Two versions are supplied: one which uses fan-beam geometry definitions to allow a demonstration of the method using just a CPU (no GPU), and another using cone-beam geometry definitions (requires GPU) which is more readily adapted to a user's own cone beam CT data. The fan-beam demonstration should run in a few seconds on a basic PC.
 
 Uses standard python packages in addition to the Astra toolbox (https://astra-toolbox.com/index.html).
+
+![A simple comparison of a computational phantom reconstructed with and without redundancy weights.](weightedReconSim_comparison.png)
+Shepp-Logan computational phantom reconstructed with and without redundancy weights (post-convolution weighting, central-slice cone-beam geometry).
