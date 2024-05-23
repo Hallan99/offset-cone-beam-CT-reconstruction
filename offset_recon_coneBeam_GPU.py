@@ -69,7 +69,7 @@ def apply_weighting_offsetDet(sino,offset,mag,detector_pixel_size,distance_sourc
 def apply_weighting_offsetCOR(sino,offset,detector_pixel_size,distance_source_origin,distance_origin_detector):
     """
     A weighting function using offset centre-of-rotation weights, for which the weighting function is angularly symmetric 
-    about the centre of rotation. This function is used in this script for the offset fan-beam geometry.
+    about the centre of rotation. This function is used in this script for the offset cone-beam geometry.
 
     Weighting functions based on the work of G. Belotti, G. Fattori, G. Baroni, and S. Rit, “Extension of the cone-beam ct field-of-view
     using two complementary short scans,” Medical Physics, 2023.
@@ -135,7 +135,7 @@ def apply_filter(sino,filter_name='ramp'):
     columns = sino.shape[1]
     pad_columns = 2**int(np.ceil(np.log2(columns)))
 
-    # if pad_columns is less than 10% of the original columns, increase to the next power of 2 tp reduce truncation artefacts
+    # if pad_columns is less than 10% of the original columns, increase to the next power of 2 to reduce truncation artefacts
     if pad_columns < 1.1*columns:
         pad_columns *= 2
 
