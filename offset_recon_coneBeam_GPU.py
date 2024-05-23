@@ -69,7 +69,10 @@ def apply_weighting_offsetDet(sino,offset,mag,detector_pixel_size,distance_sourc
 def apply_weighting_offsetCOR(sino,offset,detector_pixel_size,distance_source_origin,distance_origin_detector):
     """
     A weighting function using offset centre-of-rotation weights, for which the weighting function is angularly symmetric 
-    about the centre of rotation. This function is used in this script for the offset fan-beam geometry. 
+    about the centre of rotation. This function is used in this script for the offset fan-beam geometry.
+
+    Weighting functions based on the work of G. Belotti, G. Fattori, G. Baroni, and S. Rit, “Extension of the cone-beam ct field-of-view
+    using two complementary short scans,” Medical Physics, 2023.
 
     Input:
     sino: sinogram, assumed to be 2D array of shape (num_projections, num_columns)
