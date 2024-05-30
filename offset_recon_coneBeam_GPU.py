@@ -192,7 +192,7 @@ def apply_filter(sino,filter_name='ramp'):
 
     return sino
 
-#%% Offset scan simulation and reconstruction using a CPU compatible fan-beam geometry
+#%% Offset scan simulation and reconstruction using a cone-beam geometry (requires GPU)
 
 if astra.use_cuda():
     print('Found GPU, continuing.')
