@@ -1,5 +1,5 @@
 # offset-cone-beam-CT-reconstruction
-Code to suport: "Extended Field-of-View X-Ray Attenuation, Phase, and Darkfield Microtomography using an Offset Cone-Beam Geometry", Harry Allan et al.
+Code to suport: "Offset geometry for extended field-of-view in multi-contrast and multi-scale X-ray microtomography of lung cancer lobectomy specimens", Harry Allan et al.
 
 
 arXiv link: https://arxiv.org/abs/2502.10322
