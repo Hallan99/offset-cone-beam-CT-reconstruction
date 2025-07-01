@@ -3,21 +3,30 @@ name: Mirror to NXCT-UCL
 on:
   push:
     branches:
-      - main  # or your default branch if different
+      - main
 
 jobs:
   mirror:
+    # Run only in the original repo (prevents forks from trying and failing)
+    if: github.repository == 'Hallan99/offset-cone-beam-CT-reconstruction'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
 
-      - name: Push to NXCT-UCL mirror repo
+      - name: Set Git credentials
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
 
+      - name: Add remote and push to NXCT-UCL
+        run: |
+          set -e  # Exit on error
+          echo "Adding remote..."
           git remote add mirror https://x-access-token:${{ secrets.MIRROR_PUSH_TOKEN }}@github.com/NXCT-UCL/offset-cone-beam-CT-reconstruction.git
+          echo "Remotes configured:"
+          git remote -v
           
+          echo "Pushing to mirror..."
           git push --mirror mirror
