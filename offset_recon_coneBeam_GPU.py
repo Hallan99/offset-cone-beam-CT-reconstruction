@@ -15,7 +15,7 @@ reconstruction, which may be applied to data acquired in a range of conventional
 Code demonstrates offset cone-beam geometry reconstruction by simulating a central-slice. Setting this up as a cone-beam
 rather than fan-beam geometry makes this code easily adapted for real user data with cone-beam systems. Note that the 
 cone-beam geometry requires a GPU, to see a simpler CPU-compatible demonstration with a fan-beam geometry please see
-an alternative script "offset_recon_fanBeam_CPU.py"..
+an alternative script "offset_recon_fanBeam_CPU.py".
 
 """
 #%%
